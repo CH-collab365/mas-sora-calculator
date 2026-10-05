@@ -295,9 +295,9 @@ export interface BackendIntegrationConfig {
   cacheTtlMinutes: number;
 }
 
-const DEFAULT_CONFIG: BackendIntegrationConfig = {
+export const DEFAULT_CONFIG: BackendIntegrationConfig = {
   backendUrl: '/api/sora',
-  useLiveBackend: false,
+  useLiveBackend: true,
   cacheTtlMinutes: 30,
 };
 
@@ -314,20 +314,28 @@ export function updateBackendConfig(config: Partial<BackendIntegrationConfig>): 
 
 /**
  * Fetch latest SORA rate record.
- * Designed to seamlessly switch between local MAS fallback and real backend API when ready.
+ * Connects directly to /api/sora with seamless fallback.
  */
 export async function getLatestSoraRate(): Promise<SoraRateRecord> {
   if (currentConfig.useLiveBackend) {
     try {
-      const response = await fetch(`${currentConfig.backendUrl}/latest`, {
+      const response = await fetch(currentConfig.backendUrl, {
         headers: currentConfig.apiKey ? { Authorization: `Bearer ${currentConfig.apiKey}` } : {},
       });
       if (response.ok) {
-        const data = await response.json();
-        return data;
+        const result = await response.json();
+        if (result.latest) {
+          return result.latest;
+        }
+        if (Array.isArray(result.records) && result.records.length > 0) {
+          return result.records[0];
+        }
+        if (result.overnightRate !== undefined) {
+          return result;
+        }
       }
     } catch {
-      // Fallback gracefully to authenticated MAS dataset
+      // Fallback gracefully to verified MAS dataset
     }
   }
 
@@ -341,12 +349,17 @@ export async function getLatestSoraRate(): Promise<SoraRateRecord> {
 export async function getHistoricalSoraRates(limit = 30): Promise<SoraRateRecord[]> {
   if (currentConfig.useLiveBackend) {
     try {
-      const response = await fetch(`${currentConfig.backendUrl}/history?limit=${limit}`, {
+      const response = await fetch(`${currentConfig.backendUrl}?limit=${limit}`, {
         headers: currentConfig.apiKey ? { Authorization: `Bearer ${currentConfig.apiKey}` } : {},
       });
       if (response.ok) {
-        const data = await response.json();
-        return data;
+        const result = await response.json();
+        if (Array.isArray(result.records) && result.records.length > 0) {
+          return result.records;
+        }
+        if (Array.isArray(result)) {
+          return result.slice(0, limit);
+        }
       }
     } catch {
       // Fallback gracefully

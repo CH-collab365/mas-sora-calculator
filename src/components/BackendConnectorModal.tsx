@@ -30,18 +30,11 @@ export const BackendConnectorModal: React.FC<BackendConnectorModalProps> = ({
   const handleTestConnection = async () => {
     setTestStatus('testing');
     try {
-      if (config.useLiveBackend) {
-        const res = await fetch(`${config.backendUrl}/latest`);
-        if (res.ok) {
-          setTestStatus('success');
-        } else {
-          setTestStatus('fallback');
-        }
+      const res = await fetch(config.backendUrl);
+      if (res.ok) {
+        setTestStatus('success');
       } else {
-        // Simulating built-in MAS data test
-        setTimeout(() => {
-          setTestStatus('success');
-        }, 500);
+        setTestStatus('fallback');
       }
     } catch {
       setTestStatus('fallback');
@@ -49,14 +42,19 @@ export const BackendConnectorModal: React.FC<BackendConnectorModalProps> = ({
   };
 
   const sampleApiResponse = `{
-  "date": "2026-10-02",
-  "overnightRate": 3.0215,
-  "compounded1M": 3.0450,
-  "compounded3M": 3.0820,
-  "compounded6M": 3.1250,
-  "volumeMillionSgd": 4120,
-  "publishedTime": "09:00 SGT",
-  "source": "Monetary Authority of Singapore (MAS)"
+  "success": true,
+  "source": "mas_live_api",
+  "endpoint": "https://eservices.mas.gov.sg/apimg-gw/.../domestic_interest_rates_daily",
+  "count": 10,
+  "latest": {
+    "date": "2026-10-02",
+    "overnightRate": 3.0215,
+    "compounded1M": 3.0450,
+    "compounded3M": 3.0820,
+    "compounded6M": 3.1250,
+    "volumeMillionSgd": 4120,
+    "publishedTime": "09:00 SGT"
+  }
 }`;
 
   const copySampleJson = () => {
@@ -161,22 +159,31 @@ export const BackendConnectorModal: React.FC<BackendConnectorModalProps> = ({
             </div>
           </div>
 
-          {/* Official MAS Datastore API Info */}
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+          {/* Serverless Endpoints Info */}
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
             <div className="font-semibold text-slate-900 flex items-center justify-between">
-              <span>Direct MAS Datastore API Resource Reference</span>
-              <a
-                href={`https://eservices.mas.gov.sg/api/action/datastore/search.json?resource_id=${MAS_SORA_DATASTORE_ID}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-teal-700 hover:text-teal-900 flex items-center gap-1 text-2xs"
-              >
-                <span>MAS Portal Docs</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
+              <span>Serverless Connection Endpoints (/api)</span>
+              <span className="text-2xs text-teal-800 font-mono font-semibold">Active</span>
             </div>
-            <div className="mt-1 font-mono text-2xs text-slate-600 break-all bg-white p-2 rounded border border-slate-200">
-              resource_id: {MAS_SORA_DATASTORE_ID}
+            <div className="space-y-1 font-mono text-2xs text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200">
+              <div>
+                <strong>/api/health.ts:</strong> Service health check & KeyId configuration status
+              </div>
+              <div className="mt-1">
+                <strong>/api/sora.ts:</strong> Proxies MAS domestic interest rates daily endpoint
+              </div>
+              <div className="mt-1 text-slate-500 font-sans text-3xs">
+                MAS Gateway Header:{' '}
+                <code className="text-teal-900 bg-slate-100 px-1 py-0.5 rounded font-mono">
+                  KeyId: &lt;MAS_KEY_ID&gt;
+                </code>
+              </div>
+            </div>
+            <div className="text-3xs text-slate-500 truncate">
+              Upstream:{' '}
+              <span className="font-mono">
+                https://eservices.mas.gov.sg/apimg-gw/.../domestic_interest_rates_daily
+              </span>
             </div>
           </div>
 
