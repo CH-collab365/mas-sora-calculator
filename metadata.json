@@ -1,0 +1,8 @@
+{
+  "name": "SORA Calc SG - MAS Overnight Rate & Interest Calculator",
+  "description": "Accurate Singapore SORA loan and mortgage calculator reading MAS-backed overnight rates, compounded averages (1M, 3M, 6M), ACT/365 compounding conventions, and interest amortization schedules.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
